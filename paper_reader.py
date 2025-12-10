@@ -4,8 +4,8 @@ import asyncio
 async def main():  
     # Configure settings  
     settings = Settings()  
-    settings.llm = "ollama/ministral-3"  
-    settings.summary_llm = "ollama/ministral-3"  
+    settings.llm = "ollama/ministral-3:14b"  
+    settings.summary_llm = "ollama/ministral-3:14b"  
     settings.embedding = "ollama/mxbai-embed-large"  
     settings.answer.answer_max_sources = 3  
       
@@ -13,9 +13,9 @@ async def main():
     local_llm_config = {  
         "model_list": [  
             {  
-                "model_name": "ollama/ministral-3",  
+                "model_name": "ollama/ministral-3:14b",  
                 "litellm_params": {  
-                    "model": "ollama/ministral-3",  
+                    "model": "ollama/ministral-3:14b",  
                     "api_base": "http://localhost:11434",  
                 },  
             }  
@@ -27,10 +27,10 @@ async def main():
     # Create document collection  
     docs = Docs()  
       
-    # Add PDF papers  
+    # Add PDF papers 
     paper_paths = ["paper1.pdf"]  
     for paper_path in paper_paths:  
-        await docs.aadd(paper_path, settings=settings)  
+        await docs.aadd(paper_path, settings=settings, use_doc_details=False)  
       
     # Query the documents  
     question = "请用中文总结这些论文的主要观点。"  
