@@ -143,10 +143,53 @@ def convert_md_to_pdf(md_path, pdf_path, scale, font_family):
         object {{ max-width:100%; margin:20px 0; display:block; }}
         table {{ border-collapse:collapse; width:100%; }}
         table, th, td {{ border:1px solid #ccc; padding:8px; }}
-        code {{ background:#f4f4f4; padding:2px 4px; border-radius:4px; }}
-        pre code {{
-          display:block; padding:10px; background:#f4f4f4; overflow-x:auto;
+
+        /* Inline code */
+        code {{
+          background:#f4f4f4;
+          padding:2px 4px;
+          border-radius:4px;
+          font-family: 'Fira Code','Consolas','Monaco',monospace;
         }}
+
+        /* Code blocks from markdown / pandoc */
+        pre code, div.sourceCode pre code {{
+          display:block;
+          padding:10px;
+          background:#f4f4f4;
+          overflow-x:auto;
+          border-radius:4px;
+          font-family: 'Fira Code','Consolas','Monaco',monospace;
+        }}
+        div.sourceCode {{
+          background:#f4f4f4;
+          border-radius:4px;
+          padding:0;
+          margin:12px 0;
+        }}
+
+        /* Basic syntax highlight colors (pandoc .sourceCode) */
+        .sourceCode span.kw {{ color:#007020; font-weight:bold; }}   /* keyword */
+        .sourceCode span.dt {{ color:#902000; }}                     /* data type */
+        .sourceCode span.dv {{ color:#40a070; }}                     /* decimal value */
+        .sourceCode span.bn {{ color:#40a070; }}                     /* base-n number */
+        .sourceCode span.fl {{ color:#40a070; }}                     /* float */
+        .sourceCode span.ch {{ color:#4070a0; }}                     /* char */
+        .sourceCode span.st {{ color:#4070a0; }}                     /* string */
+        .sourceCode span.co {{ color:#60a0b0; font-style:italic; }}  /* comment */
+        .sourceCode span.ot {{ color:#007020; }}                     /* other */
+        .sourceCode span.fu {{ color:#06287e; }}                     /* function */
+        .sourceCode span.er {{ color:#ff0000; font-weight:bold; }}   /* error */
+
+        /* CodeHilite (markdown extension) fallback */
+        .codehilite {{ background:#f4f4f4; border-radius:4px; padding:10px; margin:12px 0; }}
+        .codehilite pre {{ margin:0; overflow-x:auto; }}
+        .codehilite .k {{ color:#007020; font-weight:bold; }}   /* keyword */
+        .codehilite .s {{ color:#4070a0; }}                     /* string */
+        .codehilite .c {{ color:#60a0b0; font-style:italic; }}  /* comment */
+        .codehilite .nf {{ color:#06287e; }}                    /* function name */
+        .codehilite .o {{ color:#666666; }}                     /* operator */
+
         /* MathML (pandoc --mathml) */
         math {{
           font-size: 1em;

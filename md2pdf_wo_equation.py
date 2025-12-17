@@ -6,6 +6,7 @@ import re
 import argparse
 import tempfile
 import subprocess
+import shutil
 import markdown
 from weasyprint import HTML
 
@@ -57,6 +58,38 @@ def fix_image_paths(md_text, base_path):
 
     return re.sub(r'!\[(.*?)\]\((.*?)\)', repl, md_text)
 
+def convert_md_to_html_with_pandoc(md_text: str) -> str:
+    """
+    Use pandoc to convert Markdown to HTML with MathML so WeasyPrint can render $...$.
+    Requires pandoc installed.
+    """
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".md", mode="w", encoding="utf-8") as f_md:
+        f_md.write(md_text)
+        md_path = f_md.name
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".html", mode="w", encoding="utf-8") as f_html:
+        html_path = f_html.name
+
+    cmd = [
+        "pandoc",
+        md_path,
+        "-f",
+        "markdown+raw_html",
+        "-t",
+        "html",
+        "--mathml",
+        "-o",
+        html_path,
+    ]
+    subprocess.run(cmd, check=True)
+    with open(html_path, "r", encoding="utf-8") as f:
+        html = f.read()
+
+    # WeasyPrint may render MathML <annotation> as visible text, causing duplicates like
+    # "N′=N⋅d/l" plus "N' = N \\cdot d/l". Strip annotations to keep only MathML glyphs.
+    html = re.sub(r"<annotation-xml[^>]*>.*?</annotation-xml>", "", html, flags=re.DOTALL | re.IGNORECASE)
+    html = re.sub(r"<annotation[^>]*>.*?</annotation>", "", html, flags=re.DOTALL | re.IGNORECASE)
+    return html
+
 def convert_md_to_pdf(md_path, pdf_path, scale, font_family):
     with open(md_path, 'r', encoding='utf-8') as f:
         text = f.read()
@@ -75,8 +108,17 @@ def convert_md_to_pdf(md_path, pdf_path, scale, font_family):
     base_path = os.path.dirname(os.path.abspath(md_path))
     text = fix_image_paths(text, base_path)
 
-    # 转为 HTML
-    body = markdown.markdown(text, extensions=['tables', 'fenced_code', 'codehilite'])
+    has_pandoc = shutil.which("pandoc") is not None
+
+    # 转为 HTML（若有 pandoc，则用 MathML 渲染 $...$）
+    if has_pandoc:
+        try:
+            body = convert_md_to_html_with_pandoc(text)
+        except subprocess.CalledProcessError:
+            body = markdown.markdown(text, extensions=['tables', 'fenced_code', 'codehilite'])
+    else:
+        body = markdown.markdown(text, extensions=['tables', 'fenced_code', 'codehilite'])
+
     html = f"""
     <!DOCTYPE html>
     <html lang="zh">
@@ -101,9 +143,59 @@ def convert_md_to_pdf(md_path, pdf_path, scale, font_family):
         object {{ max-width:100%; margin:20px 0; display:block; }}
         table {{ border-collapse:collapse; width:100%; }}
         table, th, td {{ border:1px solid #ccc; padding:8px; }}
-        code {{ background:#f4f4f4; padding:2px 4px; border-radius:4px; }}
-        pre code {{
-          display:block; padding:10px; background:#f4f4f4; overflow-x:auto;
+
+        /* Inline code */
+        code {{
+          background:#f4f4f4;
+          padding:2px 4px;
+          border-radius:4px;
+          font-family: 'Fira Code','Consolas','Monaco',monospace;
+        }}
+
+        /* Code blocks from markdown / pandoc */
+        pre code, div.sourceCode pre code {{
+          display:block;
+          padding:10px;
+          background:#f4f4f4;
+          overflow-x:auto;
+          border-radius:4px;
+          font-family: 'Fira Code','Consolas','Monaco',monospace;
+        }}
+        div.sourceCode {{
+          background:#f4f4f4;
+          border-radius:4px;
+          padding:0;
+          margin:12px 0;
+        }}
+
+        /* Basic syntax highlight colors (pandoc .sourceCode) */
+        .sourceCode span.kw {{ color:#007020; font-weight:bold; }}   /* keyword */
+        .sourceCode span.dt {{ color:#902000; }}                     /* data type */
+        .sourceCode span.dv {{ color:#40a070; }}                     /* decimal value */
+        .sourceCode span.bn {{ color:#40a070; }}                     /* base-n number */
+        .sourceCode span.fl {{ color:#40a070; }}                     /* float */
+        .sourceCode span.ch {{ color:#4070a0; }}                     /* char */
+        .sourceCode span.st {{ color:#4070a0; }}                     /* string */
+        .sourceCode span.co {{ color:#60a0b0; font-style:italic; }}  /* comment */
+        .sourceCode span.ot {{ color:#007020; }}                     /* other */
+        .sourceCode span.fu {{ color:#06287e; }}                     /* function */
+        .sourceCode span.er {{ color:#ff0000; font-weight:bold; }}   /* error */
+
+        /* CodeHilite (markdown extension) fallback */
+        .codehilite {{ background:#f4f4f4; border-radius:4px; padding:10px; margin:12px 0; }}
+        .codehilite pre {{ margin:0; overflow-x:auto; }}
+        .codehilite .k {{ color:#007020; font-weight:bold; }}   /* keyword */
+        .codehilite .s {{ color:#4070a0; }}                     /* string */
+        .codehilite .c {{ color:#60a0b0; font-style:italic; }}  /* comment */
+        .codehilite .nf {{ color:#06287e; }}                    /* function name */
+        .codehilite .o {{ color:#666666; }}                     /* operator */
+
+        /* MathML (pandoc --mathml) */
+        math {{
+          font-size: 1em;
+        }}
+        math annotation, math annotation-xml {{
+          display: none;
         }}
       </style>
     </head>
@@ -125,6 +217,9 @@ def main():
     if not os.path.isfile(args.input):
         print(f"❌ 找不到输入文件: {args.input}")
         return
+
+    if shutil.which("pandoc") is None:
+        print("⚠️  未检测到 pandoc：$...$ 公式将不会被渲染（将原样输出）。可安装：sudo apt install pandoc 或 pipx/conda 安装。")
 
     convert_md_to_pdf(args.input, args.output, args.scale, args.font)
 
