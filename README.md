@@ -109,7 +109,7 @@ python paper_reader.py
 
 
 ## Prompt For Professional Reading
-```
+``` 中文提示词
 帮我详细解释一下这篇文章，包括以下部分：
     1. 论文核心概念
         对论文核心insight的简要总结
@@ -132,4 +132,30 @@ python paper_reader.py
         5.3 未来的方向（未来可能的发展方向）
     
 注意：请以排版清晰方便阅读的markdown的格式进行输出。以论文的标题作为标题放在首行。请把关键图与公式的标号放在相应的位置，以方便后续手动查找或插入。
+```
+
+``` English Prompt
+Help me provide a detailed explanation of this paper, including the following sections:
+
+    1. Core Concepts of the Paper
+        A brief summary of the paper’s core insights
+
+    2. Explanation of Important Terms in the Paper
+        Detailed explanations of terms that appear frequently or are particularly important
+
+    3. Methods Used in the Paper
+        3.1 Problems with Previous Methods (and how they motivate the proposed method)
+        3.2 Overall Framework (a highly detailed description of the core workflow in the methods section, ensuring that the entire method can be fully reproduced, including details, formulas, procedures, and variable definitions)
+        3.3 Analysis of Key Challenges (a clearer and more intuitive explanation of the more complex or critical parts of the method)
+
+    4. Experimental Results and Analysis
+        4.1 Experimental Setup (datasets, models, metrics, hyperparameter settings, baselines, etc.)
+        4.2 Experimental Results (how much the proposed method improves the metrics, along with other related effects or positive evaluations)
+
+    5. Conclusion
+        5.1 Contributions of the Paper
+        5.2 Limitations of the Paper (aspects where the paper has issues)
+        5.3 Future Directions (possible directions for future development)
+
+Note: Please output the explanation in a clean and easy-to-read Markdown format. Use the paper’s title as the main heading on the first line. Please place the labels for key figures and formulas in the appropriate positions to facilitate later manual lookup or insertion.
 ```
